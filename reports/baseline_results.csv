@@ -1,0 +1,3 @@
+split,test_prevalence,always_pass_accuracy,always_pass_failure_recall,constant_score_average_precision
+Chronological,0.054140127388535034,0.945859872611465,0.0,0.054140127388535034
+Stratified random,0.06687898089171974,0.9331210191082803,0.0,0.06687898089171974

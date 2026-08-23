@@ -1,0 +1,11 @@
+{
+  "generated_at_utc": "2026-08-22T18:33:54.296233+00:00",
+  "random_state": 42,
+  "review_budget": 0.1,
+  "bootstrap_resamples": 1000,
+  "stability_resamples": 20,
+  "archive_sha256": "eea568baf3c2229096d7d294cf0b096b5502bd96d92c0b80a65b84714059be8e",
+  "python": "3.12.13",
+  "pandas": "2.2.3",
+  "scikit_learn": "1.8.0"
+}

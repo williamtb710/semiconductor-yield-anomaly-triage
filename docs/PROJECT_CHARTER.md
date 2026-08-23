@@ -1,72 +1,65 @@
-# Project Charter
+# Analytical Scope and Evaluation Plan
 
-## Decision statement
+## Decision question
 
-Build a compact, explainable case study showing how a manufacturing analytics practitioner could rank rare-failure risk for review while being explicit about data quality, leakage, operating thresholds, uncertainty, drift, and the boundary between prediction and physical root cause.
+Can anonymous process measurements rank rare downstream failures well enough to support a constrained engineering-review queue, and how sensitive is that conclusion to time ordering and model choice?
 
-The project succeeds if William can explain the choices and limitations clearly to semiconductor EDA, smart-manufacturing, process-control, yield-analytics, inspection, and digital-twin practitioners at SEMICON Taiwan.
+The output is a triage aid: a ranked queue for investigation. It is not a process-control rule, virtual-metrology claim, causal model, or physical root-cause diagnosis.
 
-## Scope
+## Dataset constraints
 
-### MVP — must be defensible by August 25
+- 1,567 production examples and 104 failures.
+- 590 numeric columns in the raw measurement file, despite 591 features in UCI metadata.
+- Anonymous variables with no tool, step, unit, or controllability metadata.
+- 4.54% missing cells overall, with highly uneven feature missingness.
+- Only 17 failures in the final 20% chronological holdout.
+- Data donated in 2008; results are not benchmarks for a current fab.
 
-1. **Provenance and audit:** official UCI acquisition, hash, shape/label/timestamp checks, missingness and constant-feature report.
-2. **Validation design:** chronological holdout as the deployment-like primary view if viable, plus stratified-random sensitivity analysis. State why neither proves future-fab generalization.
-3. **Baselines:** an always-pass/naive reference and a leakage-safe pipeline using training-only imputation, scaling, regularized logistic regression, and class weighting.
-4. **Limited comparison:** at most one nonlinear contrast (planned default: a constrained random forest) after the linear baseline works. No broad hyperparameter sweep.
-5. **Evaluation:** confusion matrix, precision-recall curve, average precision, recall and precision at a stated review budget (planned default: top 10% risk) and/or false-alarm constraint. Include class prevalence and raw counts.
-6. **Interpretation:** coefficients and/or held-out permutation importance; stability across training resamples/folds if time permits. Always use anonymous names such as `sensor_123`.
-7. **Triage output:** ranked records with timestamp, observed label, risk score, decision at chosen threshold, and a small set of top contributing anonymous variables.
-8. **Monitoring:** descriptive time-bucket prevalence/missingness checks and one clearly labeled simulated shift demonstration.
-9. **Conference package:** polished README, clean notebooks, environment file, saved figures, one-page executive summary, three-slide talk track, five technically informed questions, and a 60-second demo script.
+## Validation designs
 
-### Optional — cut before weakening the MVP
+### Primary: chronological holdout
 
-- Probability calibration if failure counts support a separate calibration procedure.
-- Bootstrap uncertainty intervals on final holdout metrics.
-- A small Streamlit or Gradio threshold slider.
-- More elaborate coefficient-stability graphics.
-- Packaging reusable helpers under `src/`.
+The first 80% of timestamp-ordered observations form training data; the last 20% form the held-out evaluation period. This approximates training on the past and scoring later records. It cannot reproduce the complexity of a true deployment backtest, but it avoids mixing future records into training.
 
-## Explicit non-goals
+### Sensitivity: stratified-random holdout
 
-- Claiming that this 2008 public dataset represents a current fab or a specific tool/process.
-- Inferring physical meanings for anonymous variables.
-- Claiming causality, control limits, virtual-metrology accuracy, or production readiness.
-- Optimizing a leaderboard metric through many models or repeated peeking at a held-out set.
-- Treating a high-risk prediction as a root-cause diagnosis.
+A fixed-seed 80/20 stratified split preserves class prevalence while mixing time. It estimates a different question: discrimination when train and test are exchangeable. Comparing the two exposes dependence on the split assumption.
 
-## Four-day schedule
+Neither split supports a claim of cross-fab, cross-product, or future-process generalization.
 
-The departure date is August 26, 2026. Work ends August 25 with a hard packaging cutoff; no late dashboard detour.
+## Models
 
-| Date | Time box | MVP output | Optional only if ahead |
-|---|---:|---|---|
-| **Sat Aug 22 — data and validation** | 3 hours | Run/confirm Checkpoint 1; inspect time distribution and failure counts; lock chronological and stratified comparison splits; build naive and logistic baselines | Draft time-bucket drift table |
-| **Sun Aug 23 — evidence and operating point** | 3–4 hours | Finalize the limited model comparison; PR curve/AP; confusion matrices; top-10%-review operating point; error analysis | Calibration if a leakage-safe procedure is supportable |
-| **Mon Aug 24 — interpretation and triage** | 3 hours | Coefficients/permutation importance, stability check, ranked triage table, descriptive/simulated drift section | Maximum 60 minutes for a dashboard after the notebook is complete |
-| **Tue Aug 25 — conference package** | 3 hours | One-page summary, three slides, README cleanup, five questions, 60-second script, clean-run verification from top to bottom | Visual polish only; no new models |
+1. **Always-pass reference:** demonstrates why plain accuracy is inadequate.
+2. **Regularized logistic regression:** interpretable linear baseline with class weighting, median imputation, missingness indicators, and standardized inputs.
+3. **Constrained random forest:** one nonlinear contrast with limited depth and minimum leaf size. It is included to test whether simple interactions help, not to pursue a leaderboard.
 
-**MVP cutline:** by Sunday night, a leakage-safe logistic baseline plus a clear PR/threshold story is already a valid project. If anything slips, remove the nonlinear model, calibration, bootstrap, and dashboard in that order.
+Hyperparameters are fixed before viewing held-out results. There is no broad search over the test set.
 
-## Evidence standard
+## Operating policy
 
-- Report exact sample counts and prevalence alongside rate metrics.
-- Keep one untouched final test view per split design; tune only within training data.
-- Keep all transformations in a scikit-learn `Pipeline` or equivalent training-only workflow.
-- Use the chronological result as primary when viable and the random result to show sensitivity to the split assumption.
-- Describe importance as association with predictions/outcomes, never as physical root cause.
-- Label uncertainty estimates, simulated drift, and assumptions visibly.
+The primary operating point sends the highest-scored 10% of held-out records to review. Reported quantities include:
 
-## Checkpoint log
+- records reviewed;
+- failures captured and missed;
+- precision, recall, and false-positive rate;
+- lift over the holdout failure prevalence;
+- full confusion-matrix counts.
 
-### Checkpoint 1 — starter audit
+This budget-based policy is more interpretable than treating `0.5` as a universal threshold. Scores from class-weighted models are used for ranking and are not presented as calibrated failure probabilities.
 
-- **Source:** official UCI dataset page and archive, dataset ID 179.
-- **Known catalog facts:** 1,567 examples; 104 fails; missing values; labels `-1` pass and `1` fail; separate test-point timestamps.
-- **Raw-file fact surfaced by audit:** `secom.data` contains 590 numeric columns even though the UCI page and `secom.names` describe 591 features. Preserve and report the discrepancy instead of silently forcing the data to match the metadata.
-- **Current decision:** no modeling, imputation, feature removal, or split selection before William runs and confirms the audit.
+## Metrics and uncertainty
 
-## Conference-ready framing
+- Average precision and the full precision-recall curve are primary discrimination measures.
+- ROC-AUC and accuracy are reported only as context.
+- Stratified bootstrap intervals quantify sampling uncertainty on held-out average precision and budget-level precision/recall.
+- With 17–21 held-out failures, uncertainty is expected to be wide.
 
-“I used an old, anonymized public dataset on purpose, so I treated it as a case study in analytical discipline rather than a claim about a modern fab. The core question was whether I could build a leakage-safe rare-event triage workflow and explain the operational tradeoff between catching failures and creating engineering review load. Feature rankings are hypotheses for investigation, not root causes.”
+## Interpretation standard
+
+Logistic coefficients are reported on standardized transformed inputs. Training-bootstrap selection frequency provides a basic stability check. Record-level contribution summaries identify anonymous variables that increased a score.
+
+All interpretations are predictive associations. Physical root-cause work would require feature semantics, process sequence, control context, maintenance history, product mix, and designed confirmation with domain engineers.
+
+## Monitoring view
+
+The analysis reports descriptive time-bucket changes in failure prevalence and missingness, train-to-test shifts in retained inputs, and one explicitly simulated one-standard-deviation feature shift. The simulated example demonstrates a monitoring mechanism; it is not evidence that the historical process experienced that intervention.
