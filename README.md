@@ -113,8 +113,7 @@ The simulation is a monitoring demonstration, not evidence of an actual process 
 │   ├── 01_data_audit.ipynb
 │   └── 02_modeling_triage.ipynb
 ├── data/
-│   ├── raw/                     # downloaded at runtime; ignored by Git
-│   └── processed/               # derived data; ignored by Git
+│   └── README.md                # provenance policy; raw/processed created at runtime
 └── reports/
     ├── analysis_summary.md
     ├── semiconductor_yield_triage_executive_summary.pdf
