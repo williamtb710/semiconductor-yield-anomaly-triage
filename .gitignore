@@ -11,7 +11,6 @@ data/processed/*
 !data/processed/.gitkeep
 
 # Generated notebook output bundles
-checkpoint_1_outputs.zip
 data_audit_outputs.zip
 modeling_outputs.zip
 
