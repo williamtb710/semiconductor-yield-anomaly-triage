@@ -10,8 +10,10 @@ data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 
-# Generated checkpoint outputs
+# Generated notebook output bundles
 checkpoint_1_outputs.zip
+data_audit_outputs.zip
+modeling_outputs.zip
 
 # Local secrets and environment overrides
 .env
