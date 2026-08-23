@@ -8,4 +8,4 @@ The audit notebook downloads `secom.zip` directly from the official UCI archive,
 - `secom_labels.data`
 - `secom.names`
 
-Do not commit mirrors, manually edited copies, or derived split files. Later notebooks will reproduce any processed data from the official raw files and a documented split configuration.
+Do not commit mirrors, manually edited copies, or derived split files. The modeling notebook reproduces derived tables and figures from the official raw files and documented split configuration.
